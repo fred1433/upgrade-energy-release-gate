@@ -1,16 +1,16 @@
 window.EVIDENCE = {
- "commit": "localtest",
- "commit_short": "localte",
- "run_url": "https://example.invalid",
- "run_number": "0",
+ "commit": "44102d647d188997be2506414c9180122b953f07",
+ "commit_short": "44102d6",
+ "run_url": "https://github.com/fred1433/upgrade-energy-release-gate/actions/runs/39797203649",
+ "run_number": "5",
  "repo": "https://github.com/fred1433/upgrade-energy-release-gate",
- "finished_at": "2026-10-22T14:36:03Z",
+ "finished_at": "2026-10-22T14:41:32Z",
  "versions": {
-  "commit": "cdfc569c17c798bcb18321c2d2eba426be1982ed",
+  "commit": "44102d647d188997be2506414c9180122b953f07",
   "supabase_cli": "2.120.0",
   "postgres": "17.11",
-  "python": "3.12.13",
-  "finished_at": "2026-10-22T14:36:03Z"
+  "python": "3.12.3",
+  "finished_at": "2026-10-22T14:41:32Z"
  },
  "counts": {
   "pytest": 21,
@@ -28,35 +28,35 @@ window.EVIDENCE = {
    "failure": null,
    "beats": [
     {
-     "t": 7.5,
+     "t": 8.9,
      "value": "22.860 V, 48.60 mΩ",
-     "detail": "key b3f57631…, stored in the outbox first",
+     "detail": "key a2631f2f…, stored in the outbox first",
      "shared": "22.860 V, 48.60 mΩ",
      "shared_detail": "key and measurement stored in the outbox first"
     },
     {
-     "t": 15.9,
+     "t": 31.7,
      "value": "row #24 recorded",
      "detail": "server answered HTTP 200 OK",
      "shared": "measurement recorded",
      "shared_detail": "server answered HTTP 200 OK; one row, checked independently"
     },
     {
-     "t": 15.9,
+     "t": 31.7,
      "value": "no answer at the bench",
      "detail": "Server disconnected without sending a response. Entry kept as pending.",
      "shared": "no answer at the bench",
      "shared_detail": "Server disconnected without sending a response. Entry kept as pending."
     },
     {
-     "t": 16.9,
+     "t": 32.7,
      "value": "same key, same payload",
      "detail": "attempt 2",
      "shared": "same key, same payload",
      "shared_detail": "attempt 2"
     },
     {
-     "t": 23.7,
+     "t": 65.2,
      "value": "replayed, row #24",
      "detail": "HTTP 200"
     }
@@ -64,47 +64,47 @@ window.EVIDENCE = {
    "rows": [
     {
      "id": 24,
-     "key": "b3f57631",
+     "key": "a2631f2f",
      "acir": "48.60",
      "v": "22.860"
     }
    ],
-   "serial": "DEMO-6S1P-04BF74"
+   "serial": "DEMO-6S1P-C8913E"
   },
   "broken": {
    "outcome": "failed",
-   "failure": "one battery test, 2 measurement rows\nassert 2 == 1\n +  where 2 = len([{'acir_mohm': '48.60', 'cycle': 1, 'id': 1, 'operation_key': 'd2025987-3b65-4b3b-a95b-37485829851d', ...}, {'acir_mohm': '48.60', 'cycle': 1, 'id': 2, 'operation_key': 'd2025987-3b65-4b3b-a95b-37485829851d', ...}])",
+   "failure": "one battery test, 2 measurement rows\nassert 2 == 1\n +  where 2 = len([{'acir_mohm': '48.60', 'cycle': 1, 'id': 1, 'operation_key': '178868c6-5e27-474b-8972-92a44c725c71', ...}, {'acir_mohm': '48.60', 'cycle': 1, 'id': 2, 'operation_key': '178868c6-5e27-474b-8972-92a44c725c71', ...}])",
    "beats": [
     {
      "t": 8.0,
      "value": "22.860 V, 48.60 mΩ",
-     "detail": "key d2025987…, stored in the outbox first",
+     "detail": "key 178868c6…, stored in the outbox first",
      "shared": "22.860 V, 48.60 mΩ",
      "shared_detail": "key and measurement stored in the outbox first"
     },
     {
-     "t": 44.6,
+     "t": 74.1,
      "value": "row #1 recorded",
      "detail": "server answered HTTP 200 OK",
      "shared": "measurement recorded",
      "shared_detail": "server answered HTTP 200 OK; one row, checked independently"
     },
     {
-     "t": 44.5,
+     "t": 74.1,
      "value": "no answer at the bench",
      "detail": "Server disconnected without sending a response. Entry kept as pending.",
      "shared": "no answer at the bench",
      "shared_detail": "Server disconnected without sending a response. Entry kept as pending."
     },
     {
-     "t": 45.6,
+     "t": 75.1,
      "value": "same key, same payload",
      "detail": "attempt 2",
      "shared": "same key, same payload",
      "shared_detail": "attempt 2"
     },
     {
-     "t": 54.3,
+     "t": 98.1,
      "value": "recorded, row #2",
      "detail": "HTTP 200"
     }
@@ -112,24 +112,24 @@ window.EVIDENCE = {
    "rows": [
     {
      "id": 1,
-     "key": "d2025987",
+     "key": "178868c6",
      "acir": "48.60",
      "v": "22.860"
     },
     {
      "id": 2,
-     "key": "d2025987",
+     "key": "178868c6",
      "acir": "48.60",
      "v": "22.860"
     }
    ],
-   "serial": "DEMO-6S1P-49E574"
+   "serial": "DEMO-6S1P-57F1F3"
   },
-  "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_one_measurement.py#L17",
-  "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v1_retry_writes_twice.sql",
-  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/migrations/20261022120000_release_gate.sql#L292",
-  "station": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/workstation/station.py#L107",
-  "proxy": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/support.py#L138"
+  "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_one_measurement.py#L17",
+  "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v1_retry_writes_twice.sql",
+  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/migrations/20261022120000_release_gate.sql#L292",
+  "station": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/workstation/station.py#L107",
+  "proxy": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/support.py#L138"
  },
  "race": {
   "hold": {
@@ -141,25 +141,25 @@ window.EVIDENCE = {
       "who": "Operator",
       "value": "opens a hold",
       "detail": "not committed yet",
-      "t": 33.9
+      "t": 48.0
      },
      {
       "who": "Quality",
       "value": "starts the release",
       "detail": "waiting on a lock (transactionid)",
-      "t": 42.7
+      "t": 56.2
      },
      {
       "who": "Operator",
       "value": "hold commits",
       "detail": "COMMIT",
-      "t": 43.6
+      "t": 56.7
      },
      {
       "who": "Quality",
       "value": "release refused",
-      "detail": "Pack DEMO-6S1P-2C5600 has an open quality hold.",
-      "t": 44.7
+      "detail": "Pack DEMO-6S1P-B9213D has an open quality hold.",
+      "t": 57.7
      }
     ],
     "state": {
@@ -168,7 +168,7 @@ window.EVIDENCE = {
      "cycle": 1,
      "open_holds": 1
     },
-    "serial": "DEMO-6S1P-2C5600"
+    "serial": "DEMO-6S1P-B9213D"
    },
    "broken": {
     "outcome": "failed",
@@ -178,25 +178,25 @@ window.EVIDENCE = {
       "who": "Operator",
       "value": "opens a hold",
       "detail": "not committed yet",
-      "t": 69.7
+      "t": 91.9
      },
      {
       "who": "Quality",
       "value": "already read the holds: none",
       "detail": "then waits only at its UPDATE (waiting on a lock (transactionid))",
-      "t": 80.4
+      "t": 99.6
      },
      {
       "who": "Operator",
       "value": "hold commits",
       "detail": "COMMIT",
-      "t": 81.4
+      "t": 100.0
      },
      {
       "who": "Quality",
       "value": "release goes through",
       "detail": "released",
-      "t": 83.2
+      "t": 101.7
      }
     ],
     "state": {
@@ -205,10 +205,10 @@ window.EVIDENCE = {
      "cycle": 1,
      "open_holds": 1
     },
-    "serial": "DEMO-6S1P-65B114"
+    "serial": "DEMO-6S1P-59C62E"
    },
-   "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_hold_release_race.py#L18",
-   "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v2a_release_without_lock.sql",
+   "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_hold_release_race.py#L18",
+   "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v2a_release_without_lock.sql",
    "variant_label": "release reads the holds without locking the pack"
   },
   "release": {
@@ -220,25 +220,25 @@ window.EVIDENCE = {
       "who": "Quality",
       "value": "releases the pack",
       "detail": "not committed yet",
-      "t": 31.7
+      "t": 48.0
      },
      {
       "who": "Operator",
       "value": "opens a hold",
       "detail": "waiting on a lock (transactionid)",
-      "t": 39.2
+      "t": 55.9
      },
      {
       "who": "Quality",
       "value": "release commits",
       "detail": "COMMIT",
-      "t": 40.1
+      "t": 56.4
      },
      {
       "who": "Operator",
       "value": "hold opened, pack put on hold",
       "detail": "eligible to ship: no",
-      "t": 42.2
+      "t": 59.5
      }
     ],
     "state": {
@@ -247,7 +247,7 @@ window.EVIDENCE = {
      "cycle": 1,
      "open_holds": 1
     },
-    "serial": "DEMO-6S1P-CF7036"
+    "serial": "DEMO-6S1P-EB9BF8"
    },
    "broken": {
     "outcome": "failed",
@@ -257,25 +257,25 @@ window.EVIDENCE = {
       "who": "Quality",
       "value": "releases the pack",
       "detail": "not committed yet",
-      "t": 69.2
+      "t": 98.9
      },
      {
       "who": "Operator",
       "value": "opens a hold",
       "detail": "waiting on a lock (transactionid)",
-      "t": 77.8
+      "t": 106.8
      },
      {
       "who": "Quality",
       "value": "release commits",
       "detail": "COMMIT",
-      "t": 78.8
+      "t": 107.2
      },
      {
       "who": "Operator",
       "value": "hold opened, pack left released",
       "detail": "eligible to ship: yes",
-      "t": 80.3
+      "t": 108.8
      }
     ],
     "state": {
@@ -284,13 +284,13 @@ window.EVIDENCE = {
      "cycle": 1,
      "open_holds": 1
     },
-    "serial": "DEMO-6S1P-7087BE"
+    "serial": "DEMO-6S1P-37747F"
    },
-   "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_hold_release_race.py#L43",
-   "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v2b_hold_leaves_eligibility.sql",
+   "test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_hold_release_race.py#L43",
+   "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v2b_hold_leaves_eligibility.sql",
    "variant_label": "the hold leaves the pack row untouched"
   },
-  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/migrations/20261022120000_release_gate.sql#L412"
+  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/migrations/20261022120000_release_gate.sql#L412"
  },
  "lift": {
   "test_anon_is_refused": {
@@ -351,12 +351,12 @@ window.EVIDENCE = {
    "row": "lifted",
    "failure": "operator direct write answered HTTP 204 without an error; hold row is now 'lifted'; a screen that only checks the error shows 'Hold lifted'\nassert 204 in (401, 403)"
   },
-  "tests": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_lift_hold_api.py#L43",
-  "direct_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_lift_hold_api.py#L58",
-  "pgtap": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/tests/02_lift_hold.sql",
-  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/migrations/20261022120000_release_gate.sql#L462",
-  "variant_silent": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v3b_policy_filters_silently.sql",
-  "variant_column": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v3_column_revoke.sql",
+  "tests": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_lift_hold_api.py#L43",
+  "direct_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_lift_hold_api.py#L58",
+  "pgtap": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/tests/02_lift_hold.sql",
+  "function": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/migrations/20261022120000_release_gate.sql#L462",
+  "variant_silent": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v3b_policy_filters_silently.sql",
+  "variant_column": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v3_column_revoke.sql",
   "variant_everyone": "E       AssertionError: quality must be able to lift a hold: HTTP 403 {'code': 'PT403', 'details': None, 'hint': None, 'message': 'Holds cannot be lifted from the API.'}"
  },
  "audit": {
@@ -376,11 +376,11 @@ window.EVIDENCE = {
    "ok 13 - ADMIN: a rolled-back hold leaves no audit trace",
    "ok 14 - ADMIN: the table owner can still disable the append-only trigger and delete (documented limit, no hash chain)"
   ],
-  "pgtap": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/tests/03_audit.sql",
-  "trigger": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/supabase/migrations/20261022120000_release_gate.sql#L232",
-  "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/variants/v4_default_grants_on_audit.sql",
+  "pgtap": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/tests/03_audit.sql",
+  "trigger": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/supabase/migrations/20261022120000_release_gate.sql#L232",
+  "variant": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/variants/v4_default_grants_on_audit.sql",
   "variant_line": "# Failed test 5: \"service_role cannot INSERT into audit_log\"",
-  "service_role_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_service_role.py#L5"
+  "service_role_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_service_role.py#L5"
  },
  "restore": {
   "rows": {
@@ -396,13 +396,13 @@ window.EVIDENCE = {
   "dump_bytes": {
    "roles.sql": 536,
    "schema.sql": 30677,
-   "data.sql": 768066
+   "data.sql": 768030
   },
   "seconds": {
-   "backup": 4.41,
-   "fresh_stack_start": 24.01,
-   "restore": 0.25,
-   "checks": 1.56
+   "backup": 3.29,
+   "fresh_stack_start": 22.99,
+   "restore": 0.17,
+   "checks": 1.54
   },
   "versions": {
    "postgres": "17.11",
@@ -414,12 +414,12 @@ window.EVIDENCE = {
    "Edge Functions",
    "secrets"
   ],
-  "script": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/scripts/restore_drill.py",
-  "tests": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests_restore/test_restore_drill.py",
-  "fix": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/drill/restore_default_acl.sql",
+  "script": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/scripts/restore_drill.py",
+  "tests": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests_restore/test_restore_drill.py",
+  "fix": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/drill/restore_default_acl.sql",
   "variant_line": "E       AssertionError: rights changed by the restore (584 differences), e.g. table_grants: gained authenticated:public.holds:UPDATE; table_grants: gained service_role:public.audit_log:INSERT; table_grants: gained anon:public.audit_log:DELETE"
  },
- "traveler_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/localtest/tests/test_contract.py#L128",
+ "traveler_test": "https://github.com/fred1433/upgrade-energy-release-gate/blob/44102d647d188997be2506414c9180122b953f07/tests/test_contract.py#L128",
  "variants": [
   {
    "name": "v1_retry_writes_twice",
