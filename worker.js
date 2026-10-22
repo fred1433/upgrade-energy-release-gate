@@ -1,5 +1,5 @@
-// Gabarit : remplacer upgrade-energy-release-gate. Sert site/ sous https://theaipipe.com/demos/upgrade-energy-release-gate/ (static files only).
-// The route is more specific than the galerie-presell route theaipipe.com/demos/*, so it wins.
+// Serves site/ under https://theaipipe.com/demos/upgrade-energy-release-gate/ (static files only).
+// This route is more specific than theaipipe.com/demos/*, so it wins.
 const BASE = '/demos/upgrade-energy-release-gate';
 export default {
   async fetch(request, env) {

@@ -3,7 +3,7 @@
 -- Expected: test_same_key_different_content_is_rejected fails with "same key with different content was accepted".
 create or replace function public.record_measurement(
   p_operation_key uuid, p_serial text, p_cycle integer, p_workstation text,
-  p_voltage_v numeric, p_acir_mohm numeric, p_measured_at timestamptz
+  p_voltage_v numeric, p_acir_mohm numeric, p_measured_at text
 ) returns jsonb
 language plpgsql volatile security definer set search_path = ''
 as $$
@@ -20,7 +20,7 @@ begin
   insert into public.measurements (serial, cycle, workstation_id, voltage_v, acir_mohm, result,
                                    measured_at, recorded_by, operation_key, payload_sha256)
   values (p_serial, p_cycle, p_workstation, p_voltage_v, p_acir_mohm, v_result,
-          p_measured_at, mes_private.caller_id(), p_operation_key, '')
+          p_measured_at::timestamptz, mes_private.caller_id(), p_operation_key, '')
   on conflict (operation_key) do update
      set voltage_v = excluded.voltage_v, acir_mohm = excluded.acir_mohm, result = excluded.result,
          measured_at = excluded.measured_at

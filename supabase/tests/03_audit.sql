@@ -27,7 +27,7 @@ reset role;
 -- A business change writes its audit rows in the same transaction.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}', true);
-select public.record_measurement('7a1d0e6e-0000-4000-8000-00000000a001', 'TAP-AUDIT-0001', 1, 'WS-TEST-02', 22.861, 48.60, now());
+select public.record_measurement('7a1d0e6e-0000-4000-8000-00000000a001', 'TAP-AUDIT-0001', 1, 'WS-TEST-02', 22.861, 48.60, now()::text);
 reset role;
 
 select results_eq(

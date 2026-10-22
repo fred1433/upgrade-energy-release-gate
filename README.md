@@ -61,7 +61,10 @@ The whole tested path runs through the API in
 
 `workstation/station.py` writes the operation key and the full measurement to a local SQLite outbox
 before the first send. Anything that does not come back with an answer stays pending and is resent
-with the same key and payload. Server contract (`record_measurement`):
+with the same key and payload. Only a definitive business refusal leaves the queue (409 conflict,
+422 rule refused); an expired session (401), a timeout (408), rate limiting (429), a server error or
+a lost connection keep the entry pending until it is resent, after signing in again if needed
+(`test_expired_session_keeps_the_measurement_pending`). Server contract (`record_measurement`):
 
 - new key: recorded;
 - same key, same content: the original result (`outcome: replayed`, same id, same server time);
@@ -76,9 +79,17 @@ the database connection carrying the first attempt is terminated after the funct
 `COMMIT`. In both cases the outcome in the database is checked independently (ADMIN query) before
 the resend.
 
-Shop rule: a measurement belongs to the cycle the station scanned. A late upload from before the
-rework stays in its cycle and does not count for release; a measurement taken before the rework that
-claims the new cycle is refused (HTTP 422). The measurement, its key and its audit rows commit together.
+Same key, same payload is recognised from a normalized fingerprint (UTC instant, fixed numeric
+scales), so a resend matches whatever time zone the session or client uses; an instant without a
+time zone is refused (HTTP 422) rather than read in the session's zone.
+
+Shop rule for retests: a measurement belongs to the cycle the station scanned on the traveler when it
+took it, and the station stores that cycle with the measurement in its outbox. A late upload from
+before the rework therefore stays in its cycle and does not count for release; a measurement can never
+claim a cycle the pack has not reached (HTTP 422). Station clocks are recorded but never decide: a
+genuine retest from a bench whose clock runs 30 s slow is accepted
+(`test_retest_with_station_clock_behind_is_accepted`). The measurement, its key and its audit rows
+commit together.
 
 ### 2. Hold against release
 
@@ -167,6 +178,9 @@ something to inspect on a real system, not something assumed here.
 - Release needs a passing voltage and ACIR test in the current cycle and no open hold.
 - Isolation level is PostgreSQL's default, READ COMMITTED.
 - A test recorded after release does not reopen the pack; reopening goes through a hold.
+- The station reads the rework cycle from the traveler it scans and stores it with each measurement;
+  the server trusts that cycle only up to the cycle the pack has reached. Station clocks are not
+  assumed to be synchronized and are never used to decide.
 - Limits (21.0 to 25.2 V, ACIR at most 60 mOhm) are invented for the demo.
 
 ## How it was written

@@ -8,9 +8,8 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Semi+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/barlow-semi-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -26,7 +25,7 @@
         <div class="hole" aria-hidden="true"></div>
         <dl class="trav-head">
           <div><dt>Part</dt><dd>RED V4 6S1P 5Ah</dd></div>
-          <div><dt>Serial</dt><dd>DEMO-6S1P-0417</dd><dd class="barcode" id="barcode" aria-hidden="true"></dd></div>
+          <div><dt>Serial of the run shown</dt><dd id="serial">DEMO-6S1P</dd><dd class="barcode" id="barcode" aria-hidden="true"></dd></div>
           <div><dt>Data</dt><dd>Fictional</dd></div>
         </dl>
         <ol class="route" id="route">
@@ -39,7 +38,7 @@
           <li class="tested"><span class="op">70</span><span class="name">Retest</span><span class="st">Rule tested</span></li>
           <li class="tested"><span class="op">80</span><span class="name">Release</span><span class="st">Rule tested</span></li>
         </ol>
-        <p class="trav-foot">Ops 40 to 80 run end to end through the API in <a id="traveler-test" href="#">one recorded test</a>: a failed ACIR, a hold, rework, a late upload that stays in its cycle, the retest, the lift, the release. Ops 10 to 30 are drawn, not modelled.</p>
+        <p class="trav-foot">Ops 40 to 80 run end to end through the API in <a id="traveler-test" href="#">one recorded test</a>. A retest counts in the rework cycle the bench scanned on the traveler, never by the bench clock. Ops 10 to 30 are drawn, not modelled.</p>
       </article>
 
       <section class="record" id="record" aria-label="Recorded runs">
@@ -49,21 +48,21 @@
         </div>
 
         <div class="scenario" id="sc-lost" role="tabpanel" aria-labelledby="tab-lost">
-          <p class="sc-intro">The database records the measurement, the answer never reaches the bench, so the bench sends it again.</p>
-          <div class="grid-head" aria-hidden="true"><span></span><span>Current code</span><span class="bad">Broken on purpose: plain insert, no key check</span></div>
-          <ol class="beats" id="beats-lost"></ol>
+          <p class="sc-intro">The database records the measurement, the answer never reaches the bench, and the bench sends it again.</p>
           <div class="verdict" id="verdict-lost"></div>
+          <ol class="beats" id="beats-lost"></ol>
         </div>
 
         <div class="scenario" id="sc-race" role="tabpanel" aria-labelledby="tab-race" hidden>
-          <p class="sc-intro">A hold and a release on one pack at the same moment, forced in both orders with two real database connections.</p>
-          <div class="order" role="radiogroup" aria-label="Which commits first">
-            <button type="button" role="radio" aria-checked="true" data-order="hold">The hold starts first</button>
-            <button type="button" role="radio" aria-checked="false" data-order="release">The release starts first</button>
+          <div class="race-top">
+            <p class="sc-intro">A hold and a release on one pack at the same moment, two real database connections.</p>
+            <div class="order" role="radiogroup" aria-label="Which starts first">
+              <button type="button" role="radio" aria-checked="true" data-order="hold">Hold starts first</button>
+              <button type="button" role="radio" aria-checked="false" data-order="release">Release starts first</button>
+            </div>
           </div>
-          <div class="grid-head" aria-hidden="true"><span></span><span>Current code</span><span class="bad" id="race-broken-label">Broken on purpose</span></div>
-          <ol class="beats" id="beats-race"></ol>
           <div class="verdict" id="verdict-race"></div>
+          <ol class="beats" id="beats-race"></ol>
         </div>
 
         <div class="rec-foot">
@@ -78,31 +77,41 @@
       <div class="check">
         <h3>Only quality lifts a hold</h3>
         <div class="body">
-          <p id="lift-line"></p>
+          <p class="result" id="lift-line"></p>
+          <p class="proof" id="lift-proof"></p>
           <details>
             <summary>When a refusal looks like a success</summary>
             <dl class="exchange" id="silent"></dl>
             <p>The database protected the row; the screen misread the answer. That is how row-level security is specified, not a Supabase defect. In this design a refusal is an explicit error, and the test fails when it is not.</p>
+            <p id="lift-more"></p>
           </details>
-          <p class="proof" id="lift-proof"></p>
         </div>
       </div>
       <div class="check">
         <h3>The audit log</h3>
         <div class="body">
-          <p>Written by a trigger inside the business transaction: actor from the signed token, workstation checked against the caller's stations, operation key, before and after values, server time. Insert, update, delete and truncate are refused to signed-in users and to <code>service_role</code>. A rolled-back change leaves no row, and a refused call is not an audit event. The table owner can still remove rows, and there is no hash chain.</p>
+          <p class="result">Only a trigger writes it, inside the business transaction; signed-in users and <code>service_role</code> are refused insert, update, delete and truncate.</p>
           <p class="proof" id="audit-proof"></p>
+          <details>
+            <summary>What each row keeps, and the limits</summary>
+            <p>Actor from the signed token, workstation checked against the caller's stations, operation key, before and after values, server time. A rolled-back change leaves no row, and a refused call is not an audit event. The table owner can still remove rows, and there is no hash chain.</p>
+          </details>
         </div>
       </div>
       <div class="check">
         <h3>Database restore drill</h3>
         <div class="body">
-          <p id="restore-line"></p>
+          <p class="result" id="restore-line"></p>
           <p class="proof" id="restore-proof"></p>
+          <details>
+            <summary>Dataset, timings, what the drill found</summary>
+            <p id="restore-more"></p>
+          </details>
         </div>
       </div>
       <p class="aside" id="service-role"></p>
-      <p class="limits">Everything on this page runs on an illustrative schema with fictional data, on a local Supabase stack and in public CI. It was built without access to Upgrade Energy's code or systems and says nothing about them.</p>
+      <p class="aside" id="counts"></p>
+      <p class="limits">Everything on this page runs on an illustrative schema with fictional data, on a local Supabase stack and in public CI. It was built without access to Upgrade Energy's code or systems and says nothing about them. The page calls no API or model; it replays recorded outputs.</p>
     </div>
   </section>
 
@@ -122,7 +131,7 @@
 </main>
 
 <footer class="foot">
-  <p><img src="favicon.svg" alt="" width="18" height="18"> Built for Matthew Barnard by Frederic at <a href="https://theaipipe.com/">The AI Pipe</a>. Source, tests and CI: <a id="repo-link" href="https://github.com/fred1433/upgrade-energy-release-gate">github.com/fred1433/upgrade-energy-release-gate</a>.</p>
+  <p><img src="favicon.svg" alt="" width="18" height="18"> Built for Matthew Barnard by Frederic at <a href="https://theaipipe.com/">The AI Pipe</a>. Source, tests and CI: <a href="https://github.com/fred1433/upgrade-energy-release-gate">github.com/fred1433/upgrade-energy-release-gate</a>.</p>
 </footer>
 <script src="data.js"></script>
 <script src="app.js"></script>

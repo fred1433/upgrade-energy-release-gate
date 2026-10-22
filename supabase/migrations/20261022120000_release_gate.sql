@@ -286,6 +286,9 @@ create trigger audit_no_truncate before truncate on public.audit_log
 --   same key, different content    -> 409, nothing changes
 --   two deliveries at once         -> the unique constraint arbitrates; one row
 --   real retest                    -> new key, recorded
+-- measured_at is text so that an instant without a time zone can be refused instead of being read in
+-- the session's zone. The fingerprint uses a normalized form (UTC epoch, fixed numeric scales), so a
+-- resend matches whatever time zone the session or the client uses.
 create function public.record_measurement(
   p_operation_key uuid,
   p_serial        text,
@@ -293,7 +296,7 @@ create function public.record_measurement(
   p_workstation   text,
   p_voltage_v     numeric,
   p_acir_mohm     numeric,
-  p_measured_at   timestamptz
+  p_measured_at   text
 ) returns jsonb
 language plpgsql volatile security definer set search_path = ''
 as $$
@@ -305,14 +308,20 @@ declare
   v_result   text;
   v_id       bigint;
   v_at       timestamptz;
+  v_measured timestamptz;
 begin
   perform mes_private.require_station(p_workstation);
   perform pg_catalog.set_config('mes.operation_key', p_operation_key::text, true);
 
-  v_hash := pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.jsonb_build_object(
-              'serial', p_serial, 'cycle', p_cycle, 'workstation', p_workstation,
-              'voltage_v', round(p_voltage_v, 3), 'acir_mohm', round(p_acir_mohm, 2),
-              'measured_at', p_measured_at)::text, 'UTF8')), 'hex');
+  if p_measured_at is null or p_measured_at !~ '([Zz]|[+-][0-9]{2}(:?[0-9]{2})?)$' then
+    raise exception 'measured_at must carry a time zone, for example 2026-10-22T16:00:00Z.' using errcode = 'PT422';
+  end if;
+  v_measured := p_measured_at::timestamptz;
+
+  v_hash := pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(pg_catalog.concat_ws('|',
+              p_serial, p_cycle::text, p_workstation,
+              round(p_voltage_v, 3)::text, round(p_acir_mohm, 2)::text,
+              extract(epoch from v_measured)::text), 'UTF8')), 'hex');
 
   -- No lock yet: concurrent deliveries of one key are arbitrated by the unique constraint below.
   select p.* into v_pack from public.packs p where p.serial = p_serial;
@@ -338,11 +347,9 @@ begin
     raise exception 'Pack % is in cycle %; a measurement cannot claim cycle %.', p_serial, v_pack.cycle, p_cycle
       using errcode = 'PT422';
   end if;
-  -- Shop rule: a measurement taken before the rework does not count as the retest.
-  if p_cycle = v_pack.cycle and v_pack.cycle > 1 and p_measured_at < v_pack.cycle_started_at then
-    raise exception 'Measured before the rework that opened cycle %; it cannot count as the retest.', v_pack.cycle
-      using errcode = 'PT422';
-  end if;
+  -- Shop rule: a measurement belongs to the cycle the station scanned when it took it; the station stores
+  -- that cycle with the measurement in its outbox, so a late upload keeps its cycle and a measurement taken
+  -- before the rework never counts as the retest. Station clocks are recorded, never used to decide.
 
   select l.* into v_limits from public.test_limits l where l.model = v_pack.model;
   v_result := case when p_voltage_v between v_limits.voltage_min_v and v_limits.voltage_max_v
@@ -352,7 +359,7 @@ begin
          (serial, cycle, workstation_id, voltage_v, acir_mohm, result,
           measured_at, recorded_by, operation_key, payload_sha256)
   values (p_serial, p_cycle, p_workstation, p_voltage_v, p_acir_mohm, v_result,
-          p_measured_at, mes_private.caller_id(), p_operation_key, v_hash)
+          v_measured, mes_private.caller_id(), p_operation_key, v_hash)
   on conflict (operation_key) do nothing
   returning id, recorded_at into v_id, v_at;
 
@@ -487,7 +494,7 @@ $$;
 
 -- ---------------------------------------------------------------- function ownership and EXECUTE
 
-alter function public.record_measurement(uuid, text, integer, text, numeric, numeric, timestamptz) owner to mes_rpc_owner;
+alter function public.record_measurement(uuid, text, integer, text, numeric, numeric, text) owner to mes_rpc_owner;
 alter function public.open_hold(text, text, text) owner to mes_rpc_owner;
 alter function public.release_pack(text, text) owner to mes_rpc_owner;
 alter function public.complete_rework(text, text, text) owner to mes_rpc_owner;
@@ -497,7 +504,7 @@ revoke all on all functions in schema public from public, anon, authenticated, s
 revoke all on all functions in schema mes_private from public, anon, authenticated, service_role;
 
 grant execute on function
-  public.record_measurement(uuid, text, integer, text, numeric, numeric, timestamptz),
+  public.record_measurement(uuid, text, integer, text, numeric, numeric, text),
   public.open_hold(text, text, text),
   public.release_pack(text, text),
   public.complete_rework(text, text, text),

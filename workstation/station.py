@@ -4,6 +4,12 @@ The station writes the operation key AND the measurement to a local SQLite outbo
 before anything leaves the machine. A send that fails or loses its reply stays
 pending and is resent later with the same key and the same payload. The server
 decides what that resend means (see record_measurement in the migration).
+
+Only a definitive business refusal takes an entry out of the queue: 409 (same key, different
+content) and 422 (a rule refused the measurement). An expired session (401), a timeout (408),
+rate limiting (429), a server error or a lost connection keep it pending, to be resent after
+signing in again. The cycle stored with each measurement is the one scanned on the traveler
+when it was taken; station clocks are recorded but never decide anything.
 """
 from __future__ import annotations
 
@@ -35,8 +41,13 @@ class HttpTransport:
 
     def __init__(self, base_url: str, apikey: str, token: str, timeout: float = 10.0):
         self.url = base_url.rstrip("/") + "/rest/v1/rpc/record_measurement"
-        self.headers = {"apikey": apikey, "Authorization": f"Bearer {token}", "Connection": "close"}
+        self.headers = {"apikey": apikey, "Connection": "close"}
         self.timeout = timeout
+        self.sign_in(token)
+
+    def sign_in(self, token: str) -> None:
+        """Use a fresh session token (after the previous one expired)."""
+        self.headers["Authorization"] = f"Bearer {token}"
 
     def send(self, payload):
         try:
@@ -113,10 +124,10 @@ class Station:
                 state = "acknowledged"
             elif status == 409:
                 state = "conflict"       # same key, different content: a person must look
-            elif 400 <= status < 500:
-                state = "rejected"       # refused by a rule or a right: a person must look
+            elif status == 422:
+                state = "rejected"       # a business rule refused it: a person must look
             else:
-                state = "pending"        # server error: try again later, same key
+                state = "pending"        # 401 expired session, 408, 429, 5xx...: resend later, same key
             self.db.execute(
                 "update outbox set attempts = attempts + 1, status = ?, server_reply = ? where operation_key = ?",
                 (state, json.dumps(body), key))

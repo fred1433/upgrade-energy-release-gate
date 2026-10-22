@@ -46,8 +46,8 @@ h1 span { display: block; }
 /* ------------------------------------------------ bench: traveler + record */
 .bench {
   display: grid;
-  grid-template-columns: 330px minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: 344px minmax(0, 1fr);
+  gap: 26px;
   align-items: start;
 }
 
@@ -87,10 +87,11 @@ h1 span { display: block; }
   border-left: 4px solid transparent; padding-left: 14px;
 }
 .row-btn:hover { background: rgba(158, 85, 40, 0.07); }
+.row-btn .st::after { content: "\203A"; margin-left: 8px; color: var(--copper); font-weight: 600; }
 .route li.active .row-btn { background: var(--sheet); border-left-color: var(--copper); }
 .op { font-family: var(--cond); font-weight: 600; color: var(--ink-2); }
 .name { font-weight: 500; }
-.st { font-size: 13px; white-space: nowrap; }
+.st { font-size: 12.5px; white-space: nowrap; }
 .st.ill { color: var(--ink-2); font-style: italic; }
 .tested .st { color: var(--pass); font-weight: 600; }
 .tested .st::before {
@@ -113,7 +114,7 @@ h1 span { display: block; }
   padding: 14px 10px 11px; border-bottom: 3px solid transparent; cursor: pointer;
 }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
-.sc-intro { margin: 14px 0 12px; max-width: 70ch; }
+.sc-intro { margin: 12px 0 12px; max-width: 70ch; }
 
 .order { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; margin-bottom: 18px; }
 .order button {
@@ -122,45 +123,46 @@ h1 span { display: block; }
 .order button + button { border-left: 1px solid var(--line); }
 .order button[aria-checked="true"] { background: var(--ink); color: #fff; }
 
-.grid-head, .beat {
-  display: grid; grid-template-columns: 210px minmax(0, 1fr) minmax(0, 1fr); gap: 18px;
-}
-.grid-head { font: 600 14px/1.3 var(--cond); color: var(--ink-2); padding: 0 0 8px; border-bottom: 1px solid var(--line); }
-.grid-head .bad { color: var(--hold); }
+.race-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin: 12px 0 12px; }
+.race-top .sc-intro { margin: 0; flex: 1 1 320px; }
+.race-top .order { margin: 0; }
 
-.beats { list-style: none; margin: 0; padding: 0; position: relative; }
-.beat { position: relative; padding: 10px 0; border-bottom: 1px solid #EEF0EF; transition: opacity .25s ease; }
+/* the verdict comes first: what the database holds at the end, fixed against broken */
+.verdict { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin: 4px 0 18px; }
+.verdict .out { border-radius: 4px; padding: 12px 16px 14px; }
+.verdict .ok { background: var(--pass-tint); }
+.verdict .ko { background: var(--hold-tint); }
+.verdict .who { display: block; font: 600 14px/1.3 var(--cond); color: var(--ink-2); margin-bottom: 6px; }
+.verdict .ko .who { color: var(--hold); }
+.verdict .num { font: 600 50px/0.95 var(--cond); display: block; margin-bottom: 4px; }
+.verdict .what { font: 600 18px/1.25 var(--cond); }
+.verdict .ok .num { color: var(--pass); }
+.verdict .ko .num { color: var(--hold); }
+.verdict .rows { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 6px; overflow-wrap: anywhere; }
+.verdict .fail { display: block; font-size: 14px; margin-top: 6px; color: var(--hold); font-weight: 500; overflow-wrap: anywhere; }
+.verdict .pass { display: block; font-size: 14px; margin-top: 6px; color: var(--pass); font-weight: 500; }
+.verdict.dim { opacity: .18; }
+
+.beats { list-style: none; margin: 0; padding: 0; position: relative; border-top: 1px solid var(--line); }
+.beat { position: relative; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; padding: 9px 0; border-bottom: 1px solid #EEF0EF; transition: opacity .25s ease; }
 .beat .what { position: relative; padding-left: 30px; font-weight: 600; line-height: 1.35; }
 /* the copper tab with two welds per step */
 .beats::before {
-  content: ""; position: absolute; left: 7px; top: 18px; bottom: 18px; width: 6px; background: #E6C3A6; border-radius: 1px;
+  content: ""; position: absolute; left: 7px; top: 16px; bottom: 16px; width: 6px; background: #E6C3A6; border-radius: 1px;
 }
 .beat .what::before, .beat .what::after {
   content: ""; position: absolute; left: 4px; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--copper);
 }
 .beat .what::after { left: 11px; }
 .beat .t { display: block; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+.beat .cells { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.beat.shared .cells { grid-template-columns: 1fr; }
+.cell .tag { font-size: 12.5px; color: var(--ink-2); margin-right: 6px; }
+.cell.broken .tag { color: var(--hold); }
 .cell .v { font-weight: 600; }
 .cell .d { display: block; font-size: 13.5px; line-height: 1.4; color: var(--ink-2); overflow-wrap: anywhere; }
-.cell .tag { display: none; }
-.cell .same-text { display: none; }
 .cell.diverge .v { color: var(--hold); }
 .beat.dim { opacity: .18; }
-
-.verdict {
-  display: grid; grid-template-columns: 210px minmax(0, 1fr) minmax(0, 1fr); gap: 18px; padding: 16px 0 4px; align-items: start;
-}
-.verdict .label { font: 600 16px/1.3 var(--cond); padding-top: 6px; }
-.verdict .out { border-radius: 4px; padding: 12px 14px; }
-.verdict .ok { background: var(--pass-tint); }
-.verdict .ko { background: var(--hold-tint); }
-.verdict .num { font: 600 44px/1 var(--cond); display: block; }
-.verdict .ok .num { color: var(--pass); }
-.verdict .ko .num { color: var(--hold); }
-.verdict .what { font-weight: 600; display: block; margin-top: 4px; }
-.verdict .rows { display: block; font-size: 14px; color: var(--ink-2); margin-top: 4px; overflow-wrap: anywhere; }
-.verdict .fail { display: block; font-size: 14px; margin-top: 8px; color: var(--hold); font-weight: 500; overflow-wrap: anywhere; }
-.verdict.dim { opacity: .18; }
 
 .rec-foot { display: flex; gap: 18px; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .play {
@@ -172,13 +174,15 @@ h1 span { display: block; }
 .src { margin: 0; font-size: 14px; color: var(--ink-2); flex: 1 1 320px; }
 
 /* ------------------------------------------------ also checked */
-.also { margin: 56px 0 0; padding-bottom: 72px; border-bottom: 2px solid var(--ink); }
+.also { margin: 48px 0 0; padding-bottom: 72px; border-bottom: 2px solid var(--ink); }
 .also h2 { font-size: 26px; margin-bottom: 8px; }
 .check { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 28px; padding: 20px 0; border-top: 1px solid var(--line); }
 .check:first-of-type { border-top: 0; }
 .check h3 { font-size: 20px; line-height: 1.3; }
 .check .body { max-width: 74ch; }
-.check p { margin: 0 0 8px; }
+.check p { margin: 0 0 6px; }
+.check .result { font-weight: 500; }
+.check details p { font-size: 15px; color: var(--ink-2); }
 .proof { font-size: 15px; color: var(--ink-2); }
 details { margin: 4px 0 10px; }
 summary { cursor: pointer; color: var(--copper); font-weight: 500; }
@@ -226,17 +230,18 @@ details[open] summary { margin-bottom: 10px; }
   .record { padding: 0 16px 18px; }
   .tabs { margin: 0 -16px; padding: 0 6px; overflow-x: auto; }
   .tabs button { font-size: 15px; padding: 14px 8px 11px; white-space: nowrap; }
-  .grid-head { display: none; }
-  .beat, .verdict { grid-template-columns: 1fr; gap: 6px; }
-  .cell { padding-left: 30px; }
-  .cell .tag { display: inline; font-size: 13px; color: var(--ink-2); margin-right: 6px; }
-  .cell.broken .tag { color: var(--hold); }
-  .cell.broken.same .v, .cell.broken.same .d { display: none; }
-  .cell.broken.same .same-text { display: inline; font-size: 14px; color: var(--ink-2); }
-  .verdict .label { padding-top: 0; }
-  .verdict .num { font-size: 36px; }
+  .beat { grid-template-columns: 1fr; gap: 4px; }
+  .beat .cells { padding-left: 30px; gap: 10px; }
+  .verdict { gap: 8px; }
+  .verdict .out { padding: 10px 10px 12px; }
+  .verdict .who { font-size: 13px; }
+  .verdict .num { font-size: 38px; display: block; margin: 0 0 2px; }
+  .verdict .what { font-size: 16px; }
+  .verdict .rows, .verdict .fail, .verdict .pass { font-size: 12.5px; }
+  .race-top .order { width: 100%; }
   .route li, .row-btn { padding-left: 14px; padding-right: 14px; grid-template-columns: 30px minmax(0, 1fr) auto; }
   .route li[data-scenario] { padding: 0; }
+  .row-btn { padding-left: 10px; }
   .steps { grid-template-columns: 1fr; }
   .order { display: flex; }
   .order button { flex: 1; padding: 10px 8px; font-size: 14px; }

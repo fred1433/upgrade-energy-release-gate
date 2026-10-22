@@ -5,7 +5,7 @@ import uuid
 from tests.helpers import call_sql, measurement, record
 from tests.support import OPERATOR, measurement_rows, new_pack, pack_state, run_in_thread, wait_blocked_or_done
 
-RPC_SQL = ("select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s::timestamptz)")
+RPC_SQL = ("select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s)")
 
 
 def as_params(p):
@@ -48,6 +48,46 @@ def test_same_key_different_content_is_rejected(stack, admin, evidence):
         f"same key with different content was accepted: HTTP {r2['status']}, stored ACIR now {rows[0]['acir_mohm']}")
     assert r2["body"]["code"] == "PT409"
     assert [r["acir_mohm"] for r in rows] == ["48.60"]
+
+
+def test_resend_in_another_time_zone_is_replayed(stack, admin, evidence):
+    serial = new_pack(admin)
+    body = measurement(serial, measured_at=datetime(2026, 10, 22, 16, 0, 0, 250000, tzinfo=timezone.utc))
+    r1 = record(stack, "operator", body)
+    r2 = stack.api("POST", "/rest/v1/rpc/record_measurement", "operator", body,
+                   prefer="timezone=America/Los_Angeles")
+    same_instant = {**body, "p_measured_at": "2026-10-22T09:00:00.25-07:00", "p_voltage_v": 22.8600}
+    r3 = record(stack, "operator", same_instant)
+    evidence.step("api", "first", **r1)
+    evidence.step("api", "resend, session time zone America/Los_Angeles", **r2)
+    evidence.step("api", "resend, same instant written as -07:00", **r3)
+    rows = measurement_rows(admin, serial)
+    assert len(rows) == 1, f"one battery test, {len(rows)} measurement rows"
+    for r in (r2, r3):
+        assert r["status"] == 200 and r["body"]["outcome"] == "replayed", f"resend not recognised: {r['status']} {r['body']}"
+        assert r["body"]["measurement_id"] == r1["body"]["measurement_id"]
+
+
+def test_measured_at_without_time_zone_is_rejected(stack, admin, evidence):
+    serial = new_pack(admin)
+    r = record(stack, "operator", {**measurement(serial), "p_measured_at": "2026-10-22T09:00:00"})
+    evidence.step("api", "response", **r)
+    assert r["status"] == 422 and "time zone" in r["body"]["message"]
+    assert measurement_rows(admin, serial) == []
+
+
+def test_retest_with_station_clock_behind_is_accepted(stack, admin, evidence):
+    serial = new_pack(admin)
+    record(stack, "operator", measurement(serial, acir_mohm=71.3))
+    stack.api("POST", "/rest/v1/rpc/open_hold", "operator",
+              {"p_serial": serial, "p_reason": "ACIR above limit (fictional)", "p_workstation": "WS-TEST-02"})
+    stack.api("POST", "/rest/v1/rpc/complete_rework", "operator",
+              {"p_serial": serial, "p_note": "Tab re-welded (fictional)", "p_workstation": "WS-WELD-01"})
+    behind = datetime.now(timezone.utc) - timedelta(seconds=30)  # the bench clock runs 30 s slow
+    r = record(stack, "operator", measurement(serial, cycle=2, acir_mohm=48.6, measured_at=behind))
+    evidence.step("api", "retest from a bench whose clock is 30 s behind", **r)
+    assert r["status"] == 200, f"a genuine retest was refused because of the bench clock: {r['body']}"
+    assert r["body"]["cycle"] == 2 and r["body"]["counts_for_release"] is True
 
 
 def test_two_simultaneous_deliveries_record_one_measurement(stack, admin, evidence):
@@ -112,9 +152,9 @@ def test_traveler_path_measurement_before_rework_is_not_a_retest(stack, admin, e
     assert r["status"] == 200 and r["body"]["cycle"] == 1 and r["body"]["counts_for_release"] is False
     assert pack_state(admin, serial)["release_eligible"] is False
 
-    r = record(stack, "operator", measurement(serial, cycle=2, acir_mohm=48.6, measured_at=t0 + timedelta(minutes=2)))
-    evidence.step("api", "old_measurement_claims_retest", **r)
-    assert r["status"] == 422, "a measurement taken before the rework must not count as the retest"
+    r = record(stack, "operator", measurement(serial, cycle=3, acir_mohm=48.6))
+    evidence.step("api", "claims_unreached_cycle", **r)
+    assert r["status"] == 422, "a measurement cannot claim a cycle the pack has not reached"
 
     r = record(stack, "operator", measurement(serial, cycle=2, acir_mohm=48.6))
     evidence.step("api", "retest", **r)

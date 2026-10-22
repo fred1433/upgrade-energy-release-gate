@@ -54,7 +54,7 @@ def seed_source(stack):
         for g in range(1, 401):
             serial = f"DRILL-6S1P-{g:04d}"
             p = measurement(serial, acir_mohm=48.0 + (g % 13) * 1.1 if g % 9 else 66.4)
-            conn.execute("select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s::timestamptz)",
+            conn.execute("select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s)",
                          [p["p_operation_key"], p["p_serial"], p["p_cycle"], p["p_workstation"],
                           p["p_voltage_v"], p["p_acir_mohm"], p["p_measured_at"]])
             if g % 9 == 0:

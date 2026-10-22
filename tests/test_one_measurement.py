@@ -45,6 +45,29 @@ def test_lost_reply_is_recorded_once(stack, admin, evidence, tmp_path):
     assert second[0]["body"]["measurement_id"] == first_id
 
 
+def test_expired_session_keeps_the_measurement_pending(stack, admin, evidence, tmp_path):
+    serial = new_pack(admin)
+    transport = HttpTransport(stack.api_url, stack.anon_key, stack.token("operator", expires_in=-60))
+    station = Station("WS-TEST-02", str(tmp_path / "outbox.sqlite"), transport,
+                      on_event=lambda kind, data: evidence.step("station", kind, **data))
+    key = station.capture(serial, cycle=1, voltage_v=22.86, acir_mohm=48.6)
+
+    first = station.flush()
+    rows = measurement_rows(admin, serial)
+    evidence.step("database", "checked", rows=rows, note="ADMIN inspection after the expired-session send")
+    assert first[0]["http_status"] == 401
+    assert station.entry(key)["status"] == "pending", "an expired session must not drop the measurement"
+    assert rows == []
+
+    transport.sign_in(stack.token("operator"))
+    evidence.step("station", "signed_in_again")
+    second = station.flush()
+    rows = measurement_rows(admin, serial)
+    evidence.step("database", "checked", rows=rows, note="ADMIN inspection after signing in again")
+    assert second[0]["body"]["outcome"] == "recorded"
+    assert len(rows) == 1, f"one battery test, {len(rows)} measurement rows"
+
+
 class CutBeforeCommit:
     """First attempt over a direct database connection that is cut after the function ran, before COMMIT."""
 
@@ -56,7 +79,7 @@ class CutBeforeCommit:
     def send(self, p):
         conn = self.stack.user_conn(OPERATOR)
         result = conn.execute(
-            "select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s::timestamptz)",
+            "select public.record_measurement(%s::uuid, %s, %s, %s, %s::numeric, %s::numeric, %s)",
             [p["p_operation_key"], p["p_serial"], p["p_cycle"], p["p_workstation"],
              p["p_voltage_v"], p["p_acir_mohm"], p["p_measured_at"]]).fetchone()[0]
         self.evidence.step("database", "ran_uncommitted", result=result)

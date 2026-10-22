@@ -17,6 +17,7 @@ def eligible_pack(stack, admin):
 
 def test_hold_first_then_release_is_refused(stack, admin, evidence):
     serial = eligible_pack(stack, admin)
+    evidence.fact("serial", serial)
     h, r = stack.user_conn(OPERATOR), stack.user_conn(QUALITY)
     try:
         res = h.execute(OPEN_HOLD, [serial, REASON]).fetchone()[0]
@@ -41,6 +42,7 @@ def test_hold_first_then_release_is_refused(stack, admin, evidence):
 
 def test_release_first_then_hold_withdraws_eligibility(stack, admin, evidence):
     serial = eligible_pack(stack, admin)
+    evidence.fact("serial", serial)
     r, h = stack.user_conn(QUALITY), stack.user_conn(OPERATOR)
     try:
         res = r.execute(RELEASE, [serial]).fetchone()[0]

@@ -46,14 +46,14 @@ class Stack:
         self.service_key = env["SERVICE_ROLE_KEY"]
         self._secret = env["JWT_SECRET"]
 
-    def token(self, who: str) -> str:
+    def token(self, who: str, expires_in: int = 3600) -> str:
         if who == "anon":
             return self.anon_key
         if who == "service_role":
             return self.service_key
         sub = {"operator": OPERATOR, "quality": QUALITY}[who]
         return jwt.encode({"sub": sub, "role": "authenticated", "aud": "authenticated",
-                           "exp": int(time.time()) + 3600}, self._secret, algorithm="HS256")
+                           "exp": int(time.time()) + expires_in}, self._secret, algorithm="HS256")
 
     def api(self, method: str, path: str, who: str, body=None, prefer: str | None = None,
             base: str | None = None) -> dict:

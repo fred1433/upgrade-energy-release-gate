@@ -59,18 +59,26 @@ def lost_reply(rec):
         "outcome": rec["outcome"],
         "failure": rec["failure"],
         "beats": [
-            {"t": cap and steps(rec, "station", "sent")[0]["t_ms"],
+            {"t": steps(rec, "station", "sent")[0]["t_ms"],
              "value": f"{float(p['p_voltage_v']):.3f} V, {float(p['p_acir_mohm']):.2f} mΩ",
-             "detail": f"key {short(cap['operation_key'])}…, stored in the outbox first"},
+             "detail": f"key {short(cap['operation_key'])}…, stored in the outbox first",
+             "shared": f"{float(p['p_voltage_v']):.3f} V, {float(p['p_acir_mohm']):.2f} mΩ",
+             "shared_detail": "key and measurement stored in the outbox first"},
             {"t": steps(rec, "network", "reply_lost")[0]["t_ms"],
              "value": f"measurement {first_rows[0]['id']} recorded",
-             "detail": f"server answered {lost['server_status'].replace('HTTP/1.1 ', 'HTTP ')}"},
+             "detail": f"server answered {lost['server_status'].replace('HTTP/1.1 ', 'HTTP ')}",
+             "shared": "measurement recorded",
+             "shared_detail": f"server answered {lost['server_status'].replace('HTTP/1.1 ', 'HTTP ')}; one row, checked independently"},
             {"t": steps(rec, "station", "no_reply")[0]["t_ms"],
              "value": "no answer at the bench",
-             "detail": f"{no_reply['error'].split(':', 1)[1].strip()} Entry kept as pending."},
+             "detail": f"{no_reply['error'].split(':', 1)[1].strip()} Entry kept as pending.",
+             "shared": "no answer at the bench",
+             "shared_detail": f"{no_reply['error'].split(':', 1)[1].strip()} Entry kept as pending."},
             {"t": steps(rec, "station", "sent")[1]["t_ms"],
              "value": "same key, same payload",
-             "detail": f"attempt {steps(rec, 'station', 'sent')[1]['data']['attempt']}"},
+             "detail": f"attempt {steps(rec, 'station', 'sent')[1]['data']['attempt']}",
+             "shared": "same key, same payload",
+             "shared_detail": f"attempt {steps(rec, 'station', 'sent')[1]['data']['attempt']}"},
             {"t": steps(rec, "station", "reply")[0]["t_ms"],
              "value": f"{second['body'].get('outcome')}, measurement {second['body'].get('measurement_id')}",
              "detail": f"HTTP {second['http_status']}"},
@@ -82,7 +90,7 @@ def lost_reply(rec):
 
 
 # ---------------------------------------------------------------- scenario 2: hold against release
-def race(rec, first):
+def race(rec, first, variant=None):
     s = rec["steps"]
     returned = [x for x in s if x["text"] == "returned"][0]["data"]
     started = [x for x in s if "started:" in x["text"]][0]
@@ -103,9 +111,15 @@ def race(rec, first):
             {"who": "Operator", "value": ("hold opened" if returned["ok"] else "hold refused"),
              "detail": returned.get("message") or "hold_opened"},
         ]
+    if variant == "v2a_release_without_lock":
+        # Without FOR UPDATE, release_pack reads the holds first (none committed yet) and only then
+        # blocks, at its UPDATE of the pack row. The recorded wait is that UPDATE.
+        beats[1]["value"] = "already read the holds: none"
+        beats[1]["detail"] = "then waits only at its UPDATE (" + beats[1]["detail"] + ")"
     for b, x in zip(beats, [x for x in s if x["actor"] != "database"]):
         b["t"] = x["t_ms"]
-    return {"outcome": rec["outcome"], "failure": rec["failure"], "beats": beats, "state": state}
+    return {"outcome": rec["outcome"], "failure": rec["failure"], "beats": beats, "state": state,
+            "serial": rec["facts"].get("serial")}
 
 
 # ---------------------------------------------------------------- family 3
@@ -166,7 +180,7 @@ def main():
         },
         "race": {
             "hold": {"current": race(load("run/test_hold_first_then_release_is_refused.json"), "hold"),
-                     "broken": race(load("variants/v2a_release_without_lock/test_hold_first_then_release_is_refused.json"), "hold"),
+                     "broken": race(load("variants/v2a_release_without_lock/test_hold_first_then_release_is_refused.json"), "hold", "v2a_release_without_lock"),
                      "test": test_link("tests/test_hold_release_race.py::test_hold_first_then_release_is_refused"),
                      "variant": src("variants/v2a_release_without_lock.sql"),
                      "variant_label": "release reads the holds without locking the pack"},
