@@ -3,6 +3,7 @@ name: release-gate
 on:
   push:
     branches: [main]
+    paths-ignore: ["site/**", "worker.js", "wrangler.toml"]
   pull_request:
   workflow_dispatch:
 
