@@ -143,6 +143,7 @@ h1 span { display: block; }
 .cell .v { font-weight: 600; }
 .cell .d { display: block; font-size: 13.5px; line-height: 1.4; color: var(--ink-2); overflow-wrap: anywhere; }
 .cell .tag { display: none; }
+.cell .same-text { display: none; }
 .cell.diverge .v { color: var(--hold); }
 .beat.dim { opacity: .18; }
 
@@ -230,6 +231,8 @@ details[open] summary { margin-bottom: 10px; }
   .cell { padding-left: 30px; }
   .cell .tag { display: inline; font-size: 13px; color: var(--ink-2); margin-right: 6px; }
   .cell.broken .tag { color: var(--hold); }
+  .cell.broken.same .v, .cell.broken.same .d { display: none; }
+  .cell.broken.same .same-text { display: inline; font-size: 14px; color: var(--ink-2); }
   .verdict .label { padding-top: 0; }
   .verdict .num { font-size: 36px; }
   .route li, .row-btn { padding-left: 14px; padding-right: 14px; grid-template-columns: 30px minmax(0, 1fr) auto; }

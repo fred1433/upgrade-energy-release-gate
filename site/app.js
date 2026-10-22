@@ -14,10 +14,10 @@
   function firstLine(s) { return String(s || "").split("\n")[0]; }
   function ms(t) { return "at " + Number(t).toFixed(0) + " ms"; }
 
-  function cell(kind, v, d, diverge) {
-    return '<div class="cell ' + kind + (diverge ? " diverge" : "") + '"><span class="tag">' +
+  function cell(kind, v, d, diverge, same) {
+    return '<div class="cell ' + kind + (diverge ? " diverge" : "") + (same ? " same" : "") + '"><span class="tag">' +
       (kind === "current" ? "Current" : "Broken") + '</span><span class="v">' + esc(v) + '</span>' +
-      (d ? '<span class="d">' + esc(d) + "</span>" : "") + "</div>";
+      (d ? '<span class="d">' + esc(d) + "</span>" : "") + '<span class="same-text">same step as current</span></div>';
   }
   function beatRow(label, t, cur, brk) {
     return '<li class="beat"><div class="what">' + esc(label) + '<span class="t">' + esc(ms(t)) + "</span></div>" + cur + brk + "</li>";
@@ -29,7 +29,7 @@
                     "The bench sends again", "The result comes back"];
   $("beats-lost").innerHTML = lostLabels.map(function (label, i) {
     var c = L.current.beats[i], b = L.broken.beats[i];
-    return beatRow(label, c.t, cell("current", c.value, c.detail), cell("broken", b.value, b.detail, i === 4 && b.value !== c.value));
+    return beatRow(label, c.t, cell("current", c.value, c.detail), cell("broken", b.value, b.detail, i === 4 && b.value !== c.value, i < 4));
   }).join("");
 
   function rowsText(rows) {
@@ -66,7 +66,7 @@
     $("beats-race").innerHTML = raceLabels[order].map(function (label, i) {
       var c = sc.current.beats[i], b = sc.broken.beats[i];
       var cv = human(c, i, order), bv = human(b, i, order);
-      return beatRow(label, c.t - sc.current.beats[0].t, cell("current", cv, c.detail), cell("broken", bv, b.detail, bv !== cv));
+      return beatRow(label, c.t - sc.current.beats[0].t, cell("current", cv, c.detail), cell("broken", bv, b.detail, bv !== cv, bv === cv));
     }).join("");
     var cs = stateText(sc.current.state), bs = stateText(sc.broken.state);
     $("verdict-race").innerHTML =
