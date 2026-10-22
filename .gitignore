@@ -6,3 +6,4 @@ evidence/
 drill/supabase/.temp/
 drill/supabase/.branches/
 .DS_Store
+.wrangler/
