@@ -65,7 +65,7 @@ def lost_reply(rec):
              "shared": f"{float(p['p_voltage_v']):.3f} V, {float(p['p_acir_mohm']):.2f} mΩ",
              "shared_detail": "key and measurement stored in the outbox first"},
             {"t": steps(rec, "network", "reply_lost")[0]["t_ms"],
-             "value": f"measurement {first_rows[0]['id']} recorded",
+             "value": f"row #{first_rows[0]['id']} recorded",
              "detail": f"server answered {lost['server_status'].replace('HTTP/1.1 ', 'HTTP ')}",
              "shared": "measurement recorded",
              "shared_detail": f"server answered {lost['server_status'].replace('HTTP/1.1 ', 'HTTP ')}; one row, checked independently"},
@@ -80,7 +80,7 @@ def lost_reply(rec):
              "shared": "same key, same payload",
              "shared_detail": f"attempt {steps(rec, 'station', 'sent')[1]['data']['attempt']}"},
             {"t": steps(rec, "station", "reply")[0]["t_ms"],
-             "value": f"{second['body'].get('outcome')}, measurement {second['body'].get('measurement_id')}",
+             "value": f"{second['body'].get('outcome')}, row #{second['body'].get('measurement_id')}",
              "detail": f"HTTP {second['http_status']}"},
         ],
         "rows": [{"id": r["id"], "key": short(r["operation_key"]), "acir": r["acir_mohm"], "v": r["voltage_v"]}
@@ -108,8 +108,10 @@ def race(rec, first, variant=None):
             {"who": "Quality", "value": "releases the pack", "detail": "not committed yet"},
             {"who": "Operator", "value": "opens a hold", "detail": started["text"].split(": ", 1)[1]},
             {"who": "Quality", "value": "release commits", "detail": "COMMIT"},
-            {"who": "Operator", "value": ("hold opened" if returned["ok"] else "hold refused"),
-             "detail": returned.get("message") or "hold_opened"},
+            {"who": "Operator",
+             "value": ("hold opened, pack put on hold" if returned["ok"] and state["status"] == "on_hold"
+                       else "hold opened, pack left " + state["status"].replace("_", " ") if returned["ok"] else "hold refused"),
+             "detail": returned.get("message") or ("eligible to ship: " + ("yes" if state["release_eligible"] else "no"))},
         ]
     if variant == "v2a_release_without_lock":
         # Without FOR UPDATE, release_pack reads the holds first (none committed yet) and only then

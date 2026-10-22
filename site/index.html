@@ -17,7 +17,7 @@
   <section class="gate" aria-labelledby="title">
     <header class="lede">
       <h1 id="title"><span>One battery test.</span> <span>One recorded result.</span></h1>
-      <p class="frame">An illustrative Supabase and Python flow with fictional data, built without access to Upgrade&nbsp;Energy's systems.</p>
+      <p class="frame">These checks use fictional data on a local Supabase stack, built without access to Upgrade&nbsp;Energy's systems. This page replays their recorded CI output.</p>
     </header>
 
     <div class="bench">
@@ -50,6 +50,8 @@
         <div class="scenario" id="sc-lost" role="tabpanel" aria-labelledby="tab-lost">
           <p class="sc-intro">The database records the measurement, the answer never reaches the bench, and the bench sends it again.</p>
           <div class="verdict" id="verdict-lost"></div>
+          <p class="caught" id="caught-lost"></p>
+          <button type="button" class="play">Replay recorded sequence</button>
           <ol class="beats" id="beats-lost"></ol>
         </div>
 
@@ -62,11 +64,12 @@
             </div>
           </div>
           <div class="verdict" id="verdict-race"></div>
+          <p class="caught" id="caught-race"></p>
+          <button type="button" class="play">Replay recorded sequence</button>
           <ol class="beats" id="beats-race"></ol>
         </div>
 
         <div class="rec-foot">
-          <button type="button" class="play" id="play">View recorded run</button>
           <p class="src" id="src"></p>
         </div>
       </section>
@@ -90,11 +93,12 @@
       <div class="check">
         <h3>The audit log</h3>
         <div class="body">
-          <p class="result">Only a trigger writes it, inside the business transaction; signed-in users and <code>service_role</code> are refused insert, update, delete and truncate.</p>
+          <p class="result">Only the database writes it, in the same transaction as the change. Signed-in users and the service key cannot add, edit or erase entries.</p>
           <p class="proof" id="audit-proof"></p>
           <details>
-            <summary>What each row keeps, and the limits</summary>
-            <p>Actor from the signed token, workstation checked against the caller's stations, operation key, before and after values, server time. A rolled-back change leaves no row, and a refused call is not an audit event. The table owner can still remove rows, and there is no hash chain.</p>
+            <summary>What each entry keeps, and the limits</summary>
+            <p>For application changes: authenticated actor, checked workstation, before and after values, server time, and the measurement's operation key where applicable. Committed application changes to packs, measurements and holds record the requesting identity. A rolled-back change leaves no entry, and a refused call is not an audit event. The table owner can still remove entries, and there is no hash chain.</p>
+            <p id="service-role"></p>
           </details>
         </div>
       </div>
@@ -109,9 +113,8 @@
           </details>
         </div>
       </div>
-      <p class="aside" id="service-role"></p>
       <p class="aside" id="counts"></p>
-      <p class="limits">Everything on this page runs on an illustrative schema with fictional data, on a local Supabase stack and in public CI. It was built without access to Upgrade Energy's code or systems and says nothing about them. The page calls no API or model; it replays recorded outputs.</p>
+      <p class="limits">These checks use fictional data on a local Supabase stack. This page replays their recorded CI output. It was built without access to Upgrade Energy's code or systems and says nothing about them, and it calls no API or model.</p>
     </div>
   </section>
 
@@ -119,14 +122,14 @@
     <h2 id="plan-title">First pass through your existing system</h2>
     <p class="plan-intro">Five steps, in this order. Scope and estimate are set after the inspection.</p>
     <ol class="steps">
-      <li><h3>Reproduce one unit end to end</h3><p>Browser, workstation, server functions, database, on one serial.</p><p class="proof-line"><span>Proof</span> a map of every write path and trust boundary.</p></li>
-      <li><h3>List the blockers</h3><p>What stops a release, ranked.</p><p class="proof-line"><span>Proof</span> each blocker with an estimate, an acceptance check and the uncertainty left.</p></li>
-      <li><h3>Fix the first blocker</h3><p>One change, small enough to review.</p><p class="proof-line"><span>Proof</span> before and after on a representative Windows workstation, in normal running and through a cut or a restart, plus the regression test that keeps it fixed.</p></li>
-      <li><h3>Rehearse a release</h3><p>On the deploy path you already have.</p><p class="proof-line"><span>Proof</span> migration compatibility, app rollback kept separate from undoing a migration, monitoring, and who answers when it fails.</p></li>
-      <li><h3>Rehearse a restore and hand over</h3><p>For the scope agreed together.</p><p class="proof-line"><span>Proof</span> the restore done, workstations reconnected, limits and remaining work written down.</p></li>
+      <li><h3>Trace one pack</h3><p>Follow one serial through the browser, Windows workstation, functions and database, and map this flow's write paths and trust boundaries.</p></li>
+      <li><h3>Rank the blockers</h3><p>Give each blocker an estimate, an acceptance check and the remaining uncertainty.</p></li>
+      <li><h3>Fix the first blocker</h3><p>Show before and after on a representative Windows workstation, including interruption or restart, with a regression test.</p></li>
+      <li><h3>Rehearse deployment</h3><p>Check migration compatibility, distinguish app rollback from database recovery, and agree monitoring and failure ownership.</p></li>
+      <li><h3>Restore and hand over</h3><p>Restore the agreed scope, reconnect workstations, and document limits and remaining work.</p></li>
     </ol>
     <p class="ai">Claude Code reads the code and writes the tests. Permissions, transaction boundaries, recovery and what each test expects are checked against invariants written down separately.</p>
-    <p class="next">Next: fifteen minutes to choose the first critical flow together.</p>
+    <p class="next"><a class="cta" href="https://cal.theaipipe.com">Choose the first critical flow · 15 minutes</a></p>
   </section>
 </main>
 

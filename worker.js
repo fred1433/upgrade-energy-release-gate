@@ -12,6 +12,10 @@ export default {
     const loc = out.headers.get('Location');
     if (loc && loc.startsWith('/')) out.headers.set('Location', BASE + loc);
     out.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    // no-transform asks Cloudflare not to rewrite this response, which keeps the zone's
+    // Web Analytics beacon out of this demo only. Other theaipipe.com pages are unchanged.
+    const cc = out.headers.get('Cache-Control');
+    out.headers.set('Cache-Control', cc ? cc + ', no-transform' : 'public, max-age=0, must-revalidate, no-transform');
     return out;
   },
 };

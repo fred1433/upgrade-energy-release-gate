@@ -374,8 +374,9 @@ begin
              'recorded_at', v_existing.recorded_at, 'result', v_existing.result, 'cycle', v_existing.cycle);
   end if;
 
-  -- Lock the pack, then refresh eligibility in later statements (fresh snapshot).
-  perform 1 from public.packs p where p.serial = p_serial for update;
+  -- Lock the pack and reload it: a rework may have committed since the first, unlocked read.
+  -- Eligibility is refreshed in later statements, and the answer describes the pack as locked here.
+  select p.* into v_pack from public.packs p where p.serial = p_serial for update;
   perform mes_private.refresh_eligibility(p_serial);
   return pg_catalog.jsonb_build_object('outcome', 'recorded', 'measurement_id', v_id, 'recorded_at', v_at,
            'result', v_result, 'cycle', p_cycle, 'counts_for_release', p_cycle = v_pack.cycle);

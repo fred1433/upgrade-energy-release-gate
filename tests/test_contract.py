@@ -171,3 +171,34 @@ def test_traveler_path_measurement_before_rework_is_not_a_retest(stack, admin, e
     state = pack_state(admin, serial)
     evidence.step("database", "checked", state=state, rows=measurement_rows(admin, serial))
     assert r["status"] == 200 and state["status"] == "released"
+
+
+def test_late_upload_racing_a_rework_reports_the_cycle_it_landed_in(stack, admin, evidence):
+    """A cycle-1 measurement arrives while the rework that opens cycle 2 is still uncommitted.
+    The answer must describe the pack as it is when the measurement commits, not as first read."""
+    serial = new_pack(admin)
+    evidence.fact("serial", serial)
+    record(stack, "operator", measurement(serial, acir_mohm=71.3))
+    stack.api("POST", "/rest/v1/rpc/open_hold", "operator",
+              {"p_serial": serial, "p_reason": "ACIR above limit (fictional)", "p_workstation": "WS-TEST-02"})
+    late = measurement(serial, cycle=1, acir_mohm=48.6)
+    w, m = stack.user_conn(OPERATOR), stack.user_conn(OPERATOR)
+    try:
+        res = w.execute("select public.complete_rework(%s, 'Tab re-welded (fictional)', 'WS-WELD-01')", [serial]).fetchone()[0]
+        evidence.step("rework connection", "rework ran, not committed", result=res)
+        fut = run_in_thread(lambda: call_sql(m, RPC_SQL, as_params(late)))
+        barrier = wait_blocked_or_done(admin, m.info.backend_pid, fut)
+        evidence.step("bench connection", f"late cycle-1 upload started: {barrier}")
+        w.commit()
+        evidence.step("rework connection", "COMMIT")
+        out = fut.result(timeout=15)
+        evidence.step("bench connection", "returned", **out)
+    finally:
+        w.close()
+        m.close()
+    state = pack_state(admin, serial)
+    evidence.step("database", "checked", state=state)
+    assert out["ok"], out
+    assert state["cycle"] == 2 and state["release_eligible"] is False
+    assert out["result"]["counts_for_release"] is False, (
+        f"the answer says the cycle-1 measurement counts for release while the pack is in cycle {state['cycle']}")

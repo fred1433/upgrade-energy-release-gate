@@ -12,7 +12,6 @@
   }
   function a(href, text) { return '<a href="' + esc(href) + '">' + esc(text) + "</a>"; }
   function firstLine(s) { return String(s || "").split("\n")[0]; }
-  function ms(t) { return "at " + Number(t).toFixed(0) + " ms"; }
   var FIXED = "Fixed version", BROKEN = "Broken on purpose";
 
   function cell(kind, v, d, diverge) {
@@ -24,17 +23,20 @@
     return '<div class="cell"><span class="tag">Both versions</span><span class="v">' + esc(v) + "</span>" +
       (d ? '<span class="d">' + esc(d) + "</span>" : "") + "</div>";
   }
+  // Times stay in the data; the narration shows order only (each version is its own recorded run).
   function beatRow(label, t, cells, isShared) {
     return '<li class="beat' + (isShared ? " shared" : " split") + '"><div class="what">' + esc(label) +
-      '<span class="t">' + esc(ms(t)) + '</span></div><div class="cells">' + cells + "</div></li>";
+      '</div><div class="cells">' + cells + "</div></li>";
   }
-  function verdict(label, ok, ko) {
-    return '<div class="out ok"><span class="who">' + esc(ok.who) + '</span><span class="num">' + esc(ok.num) +
-      '</span><span class="what">' + esc(ok.what) + "</span>" + (ok.rows ? '<span class="rows">' + esc(ok.rows) + "</span>" : "") +
-      '<span class="pass">Test passed</span></div>' +
-      '<div class="out ko"><span class="who">' + esc(ko.who) + '</span><span class="num">' + esc(ko.num) +
-      '</span><span class="what">' + esc(ko.what) + "</span>" + (ko.rows ? '<span class="rows">' + esc(ko.rows) + "</span>" : "") +
-      '<span class="fail">Test failed: ' + esc(ko.fail) + "</span></div>";
+  function card(kind, who, num, what, foot) {
+    return '<div class="out ' + kind + '"><span class="who">' + esc(who) + '</span><span class="num">' + esc(num) +
+      '</span><span class="what">' + esc(what) + '</span><span class="' + (kind === "ok" ? "pass" : "fail") + '">' + esc(foot) + "</span></div>";
+  }
+  function verdict(ok, ko) {
+    return card("ok", FIXED, ok.num, ok.what, "Test passed") + card("ko", BROKEN, ko.num, ko.what, "Test failed");
+  }
+  function caught(label, failure) {
+    return BROKEN + ": " + esc(label) + ". Its test fails with “" + esc(failure) + "”.";
   }
 
   /* ---------------------------------------------------------- scenario 1: lost reply */
@@ -46,14 +48,11 @@
     if (i < 4) return beatRow(label, c.t, shared(c.shared, c.shared_detail), true);
     return beatRow(label, c.t, cell("fixed", c.value, c.detail) + cell("broken", b.value, b.detail, b.value !== c.value), false);
   }).join("");
-  function rowsText(rows) {
-    return rows.map(function (r) { return "measurement " + r.id + ", " + r.acir + " mΩ"; }).join("; ");
-  }
   var nC = L.current.rows.length, nB = L.broken.rows.length;
-  $("verdict-lost").innerHTML = verdict("rows",
-    { who: FIXED, num: nC, what: nC === 1 ? "record for one test" : "records for one test", rows: rowsText(L.current.rows) },
-    { who: BROKEN + ": plain insert, no key check", num: nB, what: nB === 1 ? "record for one test" : "records for one test",
-      rows: rowsText(L.broken.rows), fail: firstLine(L.broken.failure) });
+  $("verdict-lost").innerHTML = verdict(
+    { num: nC, what: (nC === 1 ? "record" : "records") + " for one test" },
+    { num: nB, what: (nB === 1 ? "record" : "records") + " for one test" });
+  $("caught-lost").innerHTML = caught("plain insert, no key check", firstLine(L.broken.failure));
 
   /* ---------------------------------------------------------- scenario 2: hold against release */
   var R = E.race;
@@ -82,10 +81,8 @@
       return beatRow(label, t, cell("fixed", cv, c.detail) + cell("broken", bv, b.detail, bv !== cv), false);
     }).join("");
     var cs = stateText(sc.current.state), bs = stateText(sc.broken.state);
-    $("verdict-race").innerHTML = verdict("state",
-      { who: FIXED, num: cs.head, what: cs.rest },
-      { who: BROKEN + ": " + sc.variant_label, num: bs.head, what: bs.rest,
-        fail: firstLine(sc.broken.failure).split(": {")[0] });
+    $("verdict-race").innerHTML = verdict({ num: cs.head, what: cs.rest }, { num: bs.head, what: bs.rest });
+    $("caught-race").innerHTML = caught(sc.variant_label, firstLine(sc.broken.failure).split(": {")[0]);
     raceOrder = order;
     setSerial();
     setSource();
@@ -169,24 +166,25 @@
 
   /* ---------------------------------------------------------- replay: steps in order, then the verdict */
   var timers = [];
-  var play = $("play");
+  var plays = document.querySelectorAll(".play");
   function stop() {
     timers.forEach(clearTimeout); timers = [];
-    document.querySelectorAll(".beat.dim, .verdict.dim").forEach(function (el) { el.classList.remove("dim"); });
-    play.disabled = false;
+    document.querySelectorAll(".beat.dim").forEach(function (el) { el.classList.remove("dim"); });
+    Array.prototype.forEach.call(plays, function (b) { b.disabled = false; });
   }
-  play.addEventListener("click", function () {
-    stop();
-    if (reduce) return;
-    var panel = panels[scenario];
-    var items = Array.prototype.slice.call(panel.querySelectorAll(".beat")).concat([panel.querySelector(".verdict")]);
-    play.disabled = true;
-    items.forEach(function (el) { el.classList.add("dim"); });
-    items.forEach(function (el, i) {
-      timers.push(setTimeout(function () {
-        el.classList.remove("dim");
-        if (i === items.length - 1) play.disabled = false;
-      }, 350 + i * 700));
+  Array.prototype.forEach.call(plays, function (play) {
+    play.addEventListener("click", function () {
+      stop();
+      if (reduce) return;
+      var items = Array.prototype.slice.call(panels[scenario].querySelectorAll(".beat"));
+      play.disabled = true;
+      items.forEach(function (el) { el.classList.add("dim"); });
+      items.forEach(function (el, i) {
+        timers.push(setTimeout(function () {
+          el.classList.remove("dim");
+          if (i === items.length - 1) play.disabled = false;
+        }, 300 + i * 650));
+      });
     });
   });
 
@@ -195,12 +193,12 @@
   var op = F.test_operator_is_refused_with_explicit_result, an = F.test_anon_is_refused, q = F.test_quality_lifts_the_hold;
   var dw = F.direct_write.map(function (x) { return x.status; });
   var dwAll = dw.every(function (s) { return s === dw[0]; }) ? "HTTP " + dw[0] : "HTTP " + dw.join(", ");
-  $("lift-line").innerHTML = "Signed out " + an.status + ", operator " + op.status + " with a stated reason, quality " + q.status +
-    ", direct write on the table " + dwAll.replace("HTTP ", "") + " for both.";
+  $("lift-line").innerHTML = "Signed out: refused. Operator: refused with a reason. Quality: allowed. Direct table changes: blocked.";
   var everyone = (F.variant_everyone.match(/HTTP \d+/) || ["refused"])[0];
   $("lift-proof").innerHTML = a(F.tests, "API tests") + ", " + a(F.pgtap, "SQL checks") + ", " + a(F.function, "the function") +
     ". Caught on purpose: a column-level revoke over a table grant let the operator lift the hold (" + a(F.variant_column, "variant") + ").";
-  $("lift-more").innerHTML = "The operator's refusal reads “" + esc(op.message) + "”. With a column-level revoke on top of a table grant, the operator's write went through (HTTP " +
+  $("lift-more").innerHTML = "Recorded answers: signed out HTTP " + an.status + ", operator HTTP " + op.status + ", quality HTTP " + q.status +
+    ", direct table changes " + dwAll + " for the operator and for quality. The operator's refusal reads “" + esc(op.message) + "”. With a column-level revoke on top of a table grant, the operator's write went through (HTTP " +
     F.column_revoke.status + ", hold " + esc(F.column_revoke.row) + "). A version that refuses everyone fails the quality case (" + everyone + ").";
   var S = F.silent;
   $("silent").innerHTML =
@@ -213,21 +211,21 @@
   var okCount = AU.tap.filter(function (l) { return l.indexOf("ok") === 0; }).length;
   var v4 = (AU.variant_line.match(/"([^"]+)"/) || [null, AU.variant_line])[1];
   $("audit-proof").innerHTML = okCount + " of " + AU.tap.length + " " + a(AU.pgtap, "SQL assertions") + " pass; " +
-    a(AU.trigger, "the trigger") + ". Caught on purpose: with Supabase's default grants left on, “" + esc(v4) + "” fails (" + a(AU.variant, "variant") + ").";
+    a(AU.trigger, "the trigger") + ". Caught on purpose: with Supabase's default grants left on, the service key could forge an entry (" + a(AU.variant, "variant") + ").";
 
   var RS = E.restore;
   var n = function (x) { return Number(x).toLocaleString("en-US"); };
   var diffs = (RS.variant_line.match(/\((\d+) differences\)/) || [null, "several"])[1];
-  $("restore-line").innerHTML = "Restored into a fresh local stack, the rights, policies and rows match the source before any migration; allowed, refused and replayed calls behave on the restored API.";
+  $("restore-line").innerHTML = "A backup restored into a fresh local stack comes back with the same rows and the same rights, and behaves the same: allowed calls pass, refused calls stay refused, a resent measurement is recognised.";
   $("restore-proof").innerHTML = E.counts.restore_passed + " of " + E.counts.restore + " " + a(RS.tests, "drill checks") +
-    " pass; " + a(RS.script, "the drill script") + ". Caught on purpose: a plain restore re-applied Supabase's default grants (" + diffs + " differences); " +
+    " pass; " + a(RS.script, "the drill script") + ". Caught on purpose: a plain restore came back with Supabase's default grants (" + diffs + " differences); " +
     a(RS.fix, "the fix") + " is part of the procedure.";
   $("restore-more").innerHTML = n(RS.rows["public.packs"]) + " fictional packs, " + n(RS.rows["public.measurements"]) +
     " measurements and " + n(RS.rows["public.audit_log"]) + " audit rows, dumped as roles, schema and data (" + RS.seconds.backup +
     " s) and restored (" + RS.seconds.restore + " s) on a CI runner, PostgreSQL " + esc(RS.versions.postgres) + ", Supabase CLI " +
-    esc(RS.versions.supabase_cli) + ". Those timings describe this demo dataset, not a recovery time. On the restored API, quality lifts a hold from before the backup, an operator is refused, and a measurement from before the backup sent again comes back “replayed”. Storage files and project configuration are not covered.";
+    esc(RS.versions.supabase_cli) + ". Those timings describe this demo dataset, not a recovery time. On the restored API, quality lifts a hold from before the backup, an operator is refused, and a measurement from before the backup sent again comes back “replayed”. This drill covers the demo database. Storage objects, Auth and project configuration, Edge Functions and secrets are excluded.";
 
-  $("service-role").innerHTML = "<code>service_role</code> bypasses row-level security but not privileges or triggers, and every change records the identity that made it (" +
+  $("service-role").innerHTML = "<code>service_role</code> bypasses row-level security but not privileges or triggers (" +
     a(AU.service_role_test, "test") + "). Which identity each real workstation uses is something to inspect on a live system, not something assumed here.";
 
   $("traveler-test").href = E.traveler_test;
